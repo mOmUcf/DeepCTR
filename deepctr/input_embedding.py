@@ -226,8 +226,25 @@ def get_linear_logit(linear_emb_list, dense_input_dict, l2_reg):
 
 def preprocess_input_embedding(feature_dim_dict, embedding_size, l2_reg_embedding, l2_reg_linear, init_std, seed,
                                create_linear_weight=True):
+    """
+    convert input data into embedding etc.
+    return:
+    deep_emb_list := [emb(feat1,emb_size)(idx1),emb(feat2,emb_size)(idx2),...,emb(featn,emb_size)(idxn)]
+        emb(feat,emb_size)(idx).output_shape=(None,1,emb_size)
+        (for sparse, it is a embedding_lookup;
+         for dense, it is a dense layer from input(dense);
+         for sequence, it is a bit complicate...)
+    linear_emb_list := [emb(feat1,1)(idx1),emb(feat2,1)(idx2),...,emb(featn,1)(idxn)]
+        **only for sparse and sequence**, emb(feat1,1)(idx1).output_shape = (None,1,1)
+    dense_input_dict := {'continious_feat1':input(),...,'continious_feat2':input()}
+        it is used to concat to the linear term of model.
+    inputs_list := [input(name='feat1'),input(name='feat2'),...,input(name='featn')] 
+        (include sparse, dense and sequence fetures)
+    """
+    # sparse_input_dict := {'feat1':input(),'feat2':input()}, dense_input_dict the same
     sparse_input_dict, dense_input_dict = create_singlefeat_inputdict(
         feature_dim_dict)
+    # sequence_input_dict just like sparse_input_dict, other unknow
     sequence_input_dict, sequence_input_len_dict, sequence_max_len_dict = create_varlenfeat_inputdict(
         feature_dim_dict)
     inputs_list, deep_emb_list, linear_emb_list = get_inputs_embedding(feature_dim_dict, embedding_size,
