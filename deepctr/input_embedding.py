@@ -174,15 +174,18 @@ def get_inputs_list(inputs):
 def get_inputs_embedding(feature_dim_dict, embedding_size, l2_reg_embedding, l2_reg_linear, init_std, seed,
                          sparse_input_dict, dense_input_dict, sequence_input_dict, sequence_input_len_dict,
                          sequence_max_len_dict, include_linear, prefix=""):
+    # sparse_embedding:={feat1.name:emb(feat1.dim,emb_size),... for feat in sparse and sequance}
     deep_sparse_emb_dict = create_embedding_dict(
         feature_dim_dict, embedding_size, init_std, seed, l2_reg_embedding, prefix=prefix + 'sparse')
 
+    # deep_emb_list:=[emb(feat1)(idx1), ... for **only** sparse]
     deep_emb_list = get_embedding_vec_list(
         deep_sparse_emb_dict, sparse_input_dict, feature_dim_dict['sparse'])
 
+    # deep_emb_list+=[emb_pooling(featk)(idxk), ... for sequence]
     deep_emb_list = merge_sequence_input(deep_sparse_emb_dict, deep_emb_list, sequence_input_dict,
                                          sequence_input_len_dict, sequence_max_len_dict, feature_dim_dict['sequence'])
-
+    # deep_emb_list+=[Reshape(Dense())(idxl), ... for dense]
     deep_emb_list = merge_dense_input(
         dense_input_dict, deep_emb_list, embedding_size, l2_reg_embedding)
 

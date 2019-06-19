@@ -52,9 +52,13 @@ def NFFM(feature_dim_dict, embedding_size=4, dnn_hidden_units=(128, 128),
     if 'sequence' in feature_dim_dict and len(feature_dim_dict['sequence']) > 0:
         raise ValueError("now sequence input is not supported in NFFM")#TODO:support sequence input
 
+    # sparse_input_dict := {'feat1':input(),'feat2':input()}, dense_input_dict the same
     sparse_input_dict, dense_input_dict = create_singlefeat_inputdict(
         feature_dim_dict)
 
+    # sparse_embedding:={feat1.name:{feati.name:emb((feat1.dim,emb_size),featj.name:emb((feat1.dim,emb_size),...)}..., for sparse}
+    # dense_embedding:={feat1.name:{feati.name:Dense(emb_size),...},..., for dense}
+    # linear_embedding:={feat1.name:emb(feat1.dim,1), ..., for sparse}
     sparse_embedding, dense_embedding, linear_embedding = create_embedding_dict(
         feature_dim_dict, embedding_size, init_std, seed, l2_reg_embedding, l2_reg_linear, )
 
@@ -93,7 +97,8 @@ def NFFM(feature_dim_dict, embedding_size=4, dnn_hidden_units=(128, 128),
                 element_wise_prod = Lambda(lambda element_wise_prod: K.sum(element_wise_prod, axis=-1))(
                     element_wise_prod)
             embed_list.append(element_wise_prod)
-
+    # embed_list:= [ele-wise product of diff fields] 
+    # embed_list[i].shape=(?,1, emb_size if not reduce_sum else 1)
     ffm_out = tf.keras.layers.Flatten()(concat_fun(embed_list, axis=1))
     if use_bn:
         ffm_out = tf.keras.layers.BatchNormalization()(ffm_out)
